@@ -56,7 +56,7 @@ public class ComputeBaconNumber implements HttpHandler {
                         params.put("id", id);
                         params.put("baconId", baconId);
                         Record result;
-                        String query = "MATCH  (actor:Actor {actorId: {id}}), (bacon:Actor {actorId: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN length(path)";
+                        String query = "MATCH  (act:actor {id: {id}}), (bacon:actor {id: {baconId}}), path = shortestPath((act)-[*]-(bacon)) RETURN length(path)";
                         StatementResult statementResult = matchSession.run(query, params);
                         while (statementResult.hasNext()) {
                             result = statementResult.next();
@@ -66,7 +66,7 @@ public class ComputeBaconNumber implements HttpHandler {
                         }
 
                         if (pathlen != null) {
-                            jsonResult = "{\n     \"baconNumber\": " + pathlen + "\n}";
+                            jsonResult = "{\n     \"baconNumber\": \"" + pathlen + "\"\n}";
                             String response = jsonResult;
                             r.sendResponseHeaders(200, response.length());
                             OutputStream os = r.getResponseBody();

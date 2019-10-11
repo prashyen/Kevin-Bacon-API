@@ -51,7 +51,7 @@ public class HasRelationship implements HttpHandler {
                 try (Session MATCHsession = driver.session())
                 {
                     Record result;
-                    String query ="MATCH  (p:Actor {actorId: {aid}}), (b:Movie {movieId: {mid}}) RETURN EXISTS( (p)-[:ACTED_IN]-(b) )";
+                    String query ="MATCH  (p:actor {id: {aid}}), (b:movie {id: {mid}}) RETURN EXISTS( (p)-[:ACTED_IN]-(b) )";
                     StatementResult statementResult = MATCHsession.run( query, params);
                     while(statementResult.hasNext()){
                         result= statementResult.next();

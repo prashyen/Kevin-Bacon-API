@@ -50,7 +50,7 @@ public class AddRelationship implements HttpHandler, AutoCloseable {
             params.put( "aID", aID );
             params.put( "mID", mID );
             try(Session CREATEsession = driver.session()) {
-                String query = "MATCH (a:Actor{actorId:{aID}}),(m:Movie{movieId:{mID}}) MERGE (a)-[:ACTED_IN]-(m) RETURN a.name, m.name";
+                String query = "MATCH (a:actor{id:{aID}}),(m:movie{id:{mID}}) MERGE (a)-[:ACTED_IN]-(m) RETURN a.name, m.name";
                 StatementResult statementResult = CREATEsession.run(query, params);
                 while (statementResult.hasNext()) {
                     result = statementResult.next();

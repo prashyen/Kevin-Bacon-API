@@ -52,14 +52,14 @@ public class GetMovie implements HttpHandler {
                 try (Session matchSession = driver.session()) {
                     Map<String, Object> params = new HashMap<String, Object>();
                     params.put("id", id);
-                    String query = "MATCH (movie:Movie { movieId: {id} })<-[:ACTED_IN]-(actor) Return movie.name, movie.movieId, actor.actorId";
+                    String query = "MATCH (mov:movie { id: {id} })<-[:ACTED_IN]-(actor) Return mov.name, mov.id, actor.id";
                     StatementResult statementResult = matchSession.run(query, params);
                     while (statementResult.hasNext()) {
                         result = statementResult.next();
                         Map<String, Object> data = result.asMap();
-                        name = (String) data.get("movie.name");
-                        idin = (String) data.get("movie.movieId");
-                        actors.add((String) data.get("actor.actorId"));
+                        name = (String) data.get("mov.name");
+                        idin = (String) data.get("mov.id");
+                        actors.add((String) data.get("actor.id"));
                     }
                 }
                 if (idin != null) {

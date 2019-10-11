@@ -41,14 +41,14 @@ public class GetActor implements HttpHandler
                 Map<String, Object> params = new HashMap<String, Object>();
                 params.put("id", idorName);
                 Record result;
-                String querycheck = "MATCH (actor { "+GetActorBy+": {id} })-[:ACTED_IN]->(movie) RETURN actor.name, actor.actorId, movie.movieId";
+                String querycheck = "MATCH (actor { "+GetActorBy+": {id} })-[:ACTED_IN]->(movie) RETURN actor.name, actor.id, movie.id";
                 StatementResult statementResult = matchSession.run(querycheck, params);
                 while (statementResult.hasNext()) {
                     result = statementResult.next();
                     Map<String, Object> data = result.asMap();
                     name = (String) data.get("actor.name");
-                    idin = (String) data.get("actor.actorId");
-                    movies.add((String) data.get("movie.movieId"));
+                    idin = (String) data.get("actor.id");
+                    movies.add((String) data.get("movie.id"));
                 }
             }
         }
