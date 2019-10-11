@@ -63,7 +63,7 @@ public class AddActor implements HttpHandler
             Map<String,Object> params = new HashMap<String,Object>();
             params.put( "name", name );
             params.put( "actorId", id );
-            String query ="MERGE (a:Actor { actorId: {actorId} }) ON MATCH SET a.name = {name} ON CREATE SET a.name = {name} RETURN a";
+            String query = "MERGE (a:Actor { actorId: {actorId} }) ON MATCH SET a.name = {name} ON CREATE SET a.name = {name} RETURN a";
             StatementResult result = creatSession.run( query, params);
         }catch(Exception e){
             throw new Exception();

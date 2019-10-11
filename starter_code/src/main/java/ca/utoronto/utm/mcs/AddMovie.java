@@ -69,7 +69,7 @@ public class AddMovie implements HttpHandler {
             params.put("name", name);
             params.put("id", id);
             Session createSession = driver.session();
-            String query = "MERGE (a:Movie { movieId: {id} }) ON MATCH SET (a.name = {name}) ON CREATE SET (a.name = {name}) RETURN a";
+            String query = "MERGE (a:Movie { movieId: {id} }) ON MATCH SET a.name = {name} ON CREATE SET a.name = {name} RETURN a";
             StatementResult result = createSession.run(query, params);
         }catch(Exception e){
             throw new Exception();
