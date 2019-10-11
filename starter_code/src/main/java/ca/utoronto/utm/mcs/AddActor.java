@@ -19,7 +19,6 @@ public class AddActor implements HttpHandler
 
     public void handle(HttpExchange r) throws IOException {
         try {
-            System.out.println(r.getRequestMethod());
             if (r.getRequestMethod().equals("PUT")) {
                 handlePost(r);
             }else{
@@ -39,7 +38,6 @@ public class AddActor implements HttpHandler
             JSONObject deserialized = new JSONObject(body);
             String name = deserialized.getString("name");
             String id = deserialized.getString("actorId");
-            System.out.println(name+" "+id);
             addActor(name, id, driver);
             r.sendResponseHeaders(200, -1);
             OutputStream os = r.getResponseBody();
