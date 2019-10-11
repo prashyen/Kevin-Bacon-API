@@ -67,7 +67,7 @@ public class GetMovie implements HttpHandler {
                     String jsonResult = "{\n     \"movieId\": \"" + idin + "\",\n     \"name\": \"" + name + "\",\n     ";
                     jsonResult = jsonResult + "\"actors\": [\n";
                     for (String actor : actors) {
-                        jsonResult = jsonResult + "          " + actor + ",\n";
+                        jsonResult = jsonResult + "          \"" + actor + "\",\n";
                     }
                     jsonResult = jsonResult + "     ]\n}";
 

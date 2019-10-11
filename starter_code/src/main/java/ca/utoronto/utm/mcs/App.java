@@ -19,6 +19,7 @@ public class App
     //close driver
 
     static int PORT = 8080;
+    private static String baconId = "nm0000102";
     public static void main(String[] args) throws IOException, JSONException
     {
         try{
@@ -30,7 +31,7 @@ public class App
             server.createContext("/api/v1/getActor", new GetActor(driver));
             server.createContext("/api/v1/getMovie", new GetMovie(driver));
             server.createContext("/api/v1/hasRelationship", new HasRelationship(driver));
-            server.createContext("/api/v1/computeBaconNumber", new ComputeBaconNumber(driver));
+            server.createContext("/api/v1/computeBaconNumber", new ComputeBaconNumber(driver, baconId));
             server.createContext("/api/v1/computeBaconPath", new ComputeBaconPath(driver));
             server.start();
             System.out.printf("Server started on port %d...\n", PORT);

@@ -19,8 +19,10 @@ import java.util.Map;
 
 public class ComputeBaconNumber implements HttpHandler {
     private Driver driver;
-    public ComputeBaconNumber(Driver driverIn){
+    private String baconId;
+    public ComputeBaconNumber(Driver driverIn, String id){
         driver = driverIn;
+        baconId = id;
     }
 
 
@@ -46,8 +48,6 @@ public class ComputeBaconNumber implements HttpHandler {
             String id = deserialized.getString("actorId");
             String jsonResult = "";
             if (id != null) {
-                List<Object> actor = GetActor.GetActor("Kevin Bacon", "name");
-                String baconId = (String) actor.get(1);
                 if(!baconId.equals(id) && baconId != null) {
                     List<String> actors = new ArrayList<String>();
                     String pathlen = null;

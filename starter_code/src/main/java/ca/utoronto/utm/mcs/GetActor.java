@@ -70,7 +70,7 @@ public class GetActor implements HttpHandler
                 result = "{\n     \"actorId\": \"" + idin + "\",\n     \"name\": \"" + name + "\",\n     ";
                 result = result + "\"movies\": [\n";
                 for (String movie : movies) {
-                    result = result + "          " + movie + ",\n";
+                    result = result + "          \"" + movie + "\",\n";
                 }
                 result = result + "     ]\n}";
 
