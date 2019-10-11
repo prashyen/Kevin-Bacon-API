@@ -22,20 +22,24 @@ public class HasRelationship implements HttpHandler {
     public HasRelationship(Driver driverIn){
         driver = driverIn;
     }
-    public void handle(HttpExchange r) {
+    public void handle(HttpExchange r) throws IOException {
         try {
             if (r.getRequestMethod().equals("GET")) {
                 handleGet(r);
+            }else{
+                throw new Exception();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
         }
     }
 
     public void handleGet(HttpExchange r) throws IOException, JSONException {
         String exists = null;
         try {
-            String rel = "";
             String body = Utils.convert(r.getRequestBody());
             JSONObject deserialized = new JSONObject(body);
             String actorId = deserialized.getString("actorId");
@@ -47,39 +51,37 @@ public class HasRelationship implements HttpHandler {
                 try (Session MATCHsession = driver.session())
                 {
                     Record result;
-                    String querycheck ="MATCH  (p:Actor {actorId: {aid}}), (b:Movie {movieId: {mid}}) RETURN EXISTS( (p)-[:ACTED_IN]-(b) )";
-                    StatementResult srcheck = MATCHsession.run( querycheck, params);
-                    ResultSummary ds = srcheck.summary();
-                    while(srcheck.hasNext()){
-                        result= srcheck.next();
+                    String query ="MATCH  (p:Actor {actorId: {aid}}), (b:Movie {movieId: {mid}}) RETURN EXISTS( (p)-[:ACTED_IN]-(b) )";
+                    StatementResult statementResult = MATCHsession.run( query, params);
+                    while(statementResult.hasNext()){
+                        result= statementResult.next();
                         Map<String,Object> data = result.asMap();
                         exists = data.get("EXISTS( (p)-[:ACTED_IN]-(b) )").toString();
                         System.out.print((exists));
                     }
-                    MATCHsession.close();
                 }
                 if (exists != null) {
-
-                    rel = "{\n     \"actorId\": \"" + actorId + "\",\n     \"movieId\": \"" + movieId + "\",\n     \"hasRelationship\": "+exists+"\n}";
-
+                    String response = "{\n     \"actorId\": \"" + actorId + "\",\n     \"movieId\": \"" + movieId + "\",\n     \"hasRelationship\": "+exists+"\n}";
+                    r.sendResponseHeaders(200, response.length());
+                    OutputStream os = r.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
+                }else{
+                    r.sendResponseHeaders(404, -1);
+                    OutputStream os = r.getResponseBody();
+                    os.write(-1);
+                    os.close();
                 }
-                String response = rel;
-                r.sendResponseHeaders(200, response.length());
-                OutputStream os = r.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
             }
-        } catch (IOException e){
-            String response = "INTERNAL SERVER ERROR\n";
-            r.sendResponseHeaders(500, response.length());
+        } catch (JSONException e){
+            r.sendResponseHeaders(400, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
-        }catch (JSONException e){
-            String response = "BAD REQUEST\n";
-            r.sendResponseHeaders(400, response.length());
+        }catch (Exception e){
+            r.sendResponseHeaders(500, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
         }
     }

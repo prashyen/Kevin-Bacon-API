@@ -22,13 +22,19 @@ public class AddMovie implements HttpHandler {
     public AddMovie(Driver driverIn){
         driver = driverIn;
     }
-    public void handle(HttpExchange r) {
+
+    public void handle(HttpExchange r) throws IOException {
         try {
-            if (r.getRequestMethod().equals("POST")) {
+            if (r.getRequestMethod().equals("PUT")) {
                 handlePost(r);
+            }else{
+                throw new Exception();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        }catch (Exception e) {
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
         }
     }
 
@@ -39,34 +45,34 @@ public class AddMovie implements HttpHandler {
             String name = deserialized.getString("name");
             String id = deserialized.getString("movieId");
             addMovie(name, id, driver);
-            String response = "";
-            r.sendResponseHeaders(200, response.length());
+            r.sendResponseHeaders(200, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
         }
-        catch (IOException e){
-            String response = "";
-            r.sendResponseHeaders(500, response.length());
+        catch (JSONException e){
+            r.sendResponseHeaders(400, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
-        }catch (JSONException e){
-            String response = "";
-            r.sendResponseHeaders(400, response.length());
+        }catch (Exception e){
+            r.sendResponseHeaders(500, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
         }
     }
 
-    private static void addMovie(String name, String id, Driver driver)
-    {
-        Map<String,Object> params = new HashMap<String,Object>();
-        params.put( "x", name );
-        params.put( "id", id );
-        Session CREATEsession = driver.session();
-        String query ="MERGE (m:Movie { name: {x} , movieId: {id}}) RETURN m";
-        StatementResult sr = CREATEsession.run( query, params);
+    private static void addMovie(String name, String id, Driver driver) throws Exception {
+        try {
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put("name", name);
+            params.put("id", id);
+            Session createSession = driver.session();
+            String query = "MERGE (a:Movie { movieId: {id} }) ON MATCH SET (a.name = {name}) ON CREATE SET (a.name = {name}) RETURN a";
+            StatementResult result = createSession.run(query, params);
+        }catch(Exception e){
+            throw new Exception();
+        }
     }
 }

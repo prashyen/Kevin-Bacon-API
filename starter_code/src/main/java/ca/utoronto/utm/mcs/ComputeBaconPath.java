@@ -29,9 +29,14 @@ public class ComputeBaconPath implements HttpHandler {
         try {
             if (r.getRequestMethod().equals("GET")) {
                 handleGet(r);
+            }else{
+                throw new Exception();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
         }
     }
 
@@ -40,7 +45,7 @@ public class ComputeBaconPath implements HttpHandler {
             String body = Utils.convert(r.getRequestBody());
             JSONObject deserialized = new JSONObject(body);
             String id = deserialized.getString("actorId");
-            String a = "";
+            String jsonResult = "";
             if (id != null) {
                 List<Object> actor = GetActor.GetActor("Kevin Bacon", "name");
                 String baconId = (String) actor.get(1);
@@ -51,36 +56,32 @@ public class ComputeBaconPath implements HttpHandler {
                     params.put("id", id);
                     params.put("baconId", baconId);
                     Record result;
-                    String querycheck = "MATCH  (actor:Actor {actorId: {id}}), (bacon:Actor {actorId: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN path";
-                    StatementResult srcheck = MATCHsession.run(querycheck, params);
-                    ResultSummary ds = srcheck.summary();
-                    while (srcheck.hasNext()) {
-                        result = srcheck.next();
+                    String query = "MATCH  (actor:Actor {actorId: {id}}), (bacon:Actor {actorId: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN path";
+                    StatementResult statementResult = MATCHsession.run(query, params);
+                    while (statementResult.hasNext()) {
+                        result = statementResult.next();
                         Map<String, Object> data = result.asMap();
-                        System.out.println(43);
                     }
 
                     if (pathlen != null) {
-                        a = "{\n     \"baconNumber\": "+pathlen+"\n}";
+                        jsonResult = "{\n     \"baconNumber\": "+pathlen+"\n}";
                     }
                 }
             }
-            String response = a;
+            String response = jsonResult;
             r.sendResponseHeaders(200, response.length());
             OutputStream os = r.getResponseBody();
             os.write(response.getBytes());
             os.close();
-        } catch (IOException e){
-            String response = "";
-            r.sendResponseHeaders(500, response.length());
-            OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
         }catch (JSONException e){
-            String response = "";
-            r.sendResponseHeaders(400, response.length());
+            r.sendResponseHeaders(400, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
+            os.close();
+        } catch (Exception e){
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
             os.close();
         }
     }

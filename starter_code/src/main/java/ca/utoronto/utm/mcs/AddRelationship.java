@@ -18,17 +18,22 @@ public class AddRelationship implements HttpHandler {
 
     private static Driver driver;
 
-
     public AddRelationship(Driver driverIn){
         driver = driverIn;
     }
-    public void handle(HttpExchange r) {
+
+    public void handle(HttpExchange r) throws IOException {
         try {
-           if (r.getRequestMethod().equals("POST")) {
+           if (r.getRequestMethod().equals("PUT")) {
                 handlePost(r);
-            }
+            }else{
+               throw new Exception();
+           }
         } catch (Exception e) {
-            e.printStackTrace();
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
         }
     }
 
@@ -40,35 +45,35 @@ public class AddRelationship implements HttpHandler {
             String aID = deserialized.getString("actorId");
             System.out.println(mID+"  "+aID);
             addRelationship(mID, aID, driver);
-            String response = "";
-            r.sendResponseHeaders(200, response.length());
+            r.sendResponseHeaders(200, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }
-        catch (IOException e){
-            String response = "";
-            r.sendResponseHeaders(500, response.length());
-            OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
         }catch (JSONException e){
-            String response = "";
-            r.sendResponseHeaders(400, response.length());
+            r.sendResponseHeaders(400, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
+            os.close();
+        }
+        catch (Exception e){
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
             os.close();
         }
     }
 
-    private static void addRelationship(String mID, String aID, Driver driver)
-    {
-        Map<String,Object> params = new HashMap<String,Object>();
-        params.put( "aID", aID );
-        params.put( "mID", mID );
-        Session CREATEsession = driver.session();
-        String query ="MATCH (a:Actor{actorId:{aID}}),(m:Movie{movieId:{mID}}) MERGE (a)-[:ACTED_IN]-(m) RETURN a.name";
-        StatementResult sr = CREATEsession.run( query, params);
-        System.out.print(sr.summary());
+    private static void addRelationship(String mID, String aID, Driver driver) throws Exception {
+        try{
+            Map<String,Object> params = new HashMap<String,Object>();
+            params.put( "aID", aID );
+            params.put( "mID", mID );
+            Session CREATEsession = driver.session();
+            String query ="MATCH (a:Actor{actorId:{aID}}),(m:Movie{movieId:{mID}}) MERGE (a)-[:ACTED_IN]-(m) RETURN a.name";
+            StatementResult sr = CREATEsession.run( query, params);
+            System.out.print(sr.summary());
+        }catch(Exception e){
+            throw new Exception();
+        }
     }
 }

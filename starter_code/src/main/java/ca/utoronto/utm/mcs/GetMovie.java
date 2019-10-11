@@ -19,16 +19,23 @@ import java.util.Map;
 
 public class GetMovie implements HttpHandler {
     private static Driver driver;
+
     public GetMovie(Driver driverIn){
         driver = driverIn;
     }
-    public void handle(HttpExchange r) {
+
+    public void handle(HttpExchange r) throws IOException {
         try {
             if (r.getRequestMethod().equals("GET")) {
                 handleGet(r);
+            }else{
+                throw new Exception();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
         }
     }
 
@@ -37,53 +44,54 @@ public class GetMovie implements HttpHandler {
             String body = Utils.convert(r.getRequestBody());
             JSONObject deserialized = new JSONObject(body);
             String id = deserialized.getString("movieId");
-            String a = "";
+            Record result;
             if (id != null) {
                 List<String> actors = new ArrayList<String>();
                 String idin = null;
                 String name = null;
-                try (Session MATCHsession = driver.session()) {
+                try (Session matchSession = driver.session()) {
                     Map<String, Object> params = new HashMap<String, Object>();
                     params.put("id", id);
-                    Record result;
-                    String querycheck = "MATCH (movie:Movie { movieId: {id} })<-[:ACTED_IN]-(actor) Return movie.name, movie.movieId, actor.actorId";
-                    StatementResult srcheck = MATCHsession.run(querycheck, params);
-                    ResultSummary ds = srcheck.summary();
-                    while (srcheck.hasNext()) {
-                        result = srcheck.next();
+                    String query = "MATCH (movie:Movie { movieId: {id} })<-[:ACTED_IN]-(actor) Return movie.name, movie.movieId, actor.actorId";
+                    StatementResult statementResult = matchSession.run(query, params);
+                    while (statementResult.hasNext()) {
+                        result = statementResult.next();
                         Map<String, Object> data = result.asMap();
                         name = (String) data.get("movie.name");
                         idin = (String) data.get("movie.movieId");
                         actors.add((String) data.get("actor.actorId"));
                     }
                 }
-
                 if (idin != null) {
 
-                    a = "{\n     \"movieId\": \"" + idin + "\",\n     \"name\": \"" + name + "\",\n     ";
-                    a = a + "\"actors\": [\n";
+                    String jsonResult = "{\n     \"movieId\": \"" + idin + "\",\n     \"name\": \"" + name + "\",\n     ";
+                    jsonResult = jsonResult + "\"actors\": [\n";
                     for (String actor : actors) {
-                        a = a + "          " + actor + ",\n";
+                        jsonResult = jsonResult + "          " + actor + ",\n";
                     }
-                    a = a + "     ]\n}";
+                    jsonResult = jsonResult + "     ]\n}";
+
+                    String response = jsonResult;
+                    r.sendResponseHeaders(200, response.length());
+                    OutputStream os = r.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
+                }else{
+                    r.sendResponseHeaders(404, -1);
+                    OutputStream os = r.getResponseBody();
+                    os.write(-1);
+                    os.close();
                 }
             }
-            String response = a;
-            r.sendResponseHeaders(200, response.length());
+        } catch (JSONException e){
+            r.sendResponseHeaders(400, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
-        } catch (IOException e){
-            String response = "";
-            r.sendResponseHeaders(500, response.length());
+        }catch (Exception e){
+            r.sendResponseHeaders(500, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }catch (JSONException e){
-            String response = "";
-            r.sendResponseHeaders(400, response.length());
-            OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
         }
     }
