@@ -12,10 +12,7 @@ import org.neo4j.driver.v1.summary.ResultSummary;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ComputeBaconPath implements HttpHandler {
     private Driver driver;
@@ -50,23 +47,50 @@ public class ComputeBaconPath implements HttpHandler {
                 List<Object> actor = GetActor.GetActor("Kevin Bacon", "name");
                 String baconId = (String) actor.get(1);
                 List<String> actors = new ArrayList<String>();
-                String pathlen = null;
-                try (Session MATCHsession = driver.session()) {
-                    Map<String, Object> params = new HashMap<String, Object>();
-                    params.put("id", id);
-                    params.put("baconId", baconId);
-                    Record result;
-                    String query = "MATCH  (actor:Actor {actorId: {id}}), (bacon:Actor {actorId: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN path";
-                    StatementResult statementResult = MATCHsession.run(query, params);
-                    while (statementResult.hasNext()) {
-                        result = statementResult.next();
-                        Map<String, Object> data = result.asMap();
-                    }
-
-                    if (pathlen != null) {
-                        jsonResult = "{\n     \"baconNumber\": "+pathlen+"\n}";
-                    }
+                Session actorSession = driver.session();
+                Map<String, Object> params = new HashMap<String, Object>();
+                params.put("id", id);
+                params.put("baconId", baconId);
+                Record result;
+                Object[] actorArray = null;
+                String actorQuery = "MATCH  (actor:Actor {actorId: {id}}), (bacon:Actor {actorId: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN EXTRACT (n in NODES(path)|n.actorId)";
+                StatementResult actorStatementResult = actorSession.run(actorQuery, params);
+                while (actorStatementResult.hasNext()) {
+                    result = actorStatementResult.next();
+                    Map<String, Object> data = result.asMap();
+                    actorArray =  ((Collection) data.get("EXTRACT (n in NODES(path)|n.actorId)")).toArray();
                 }
+
+                if (actorArray != null) {
+                    actorArray = removeNullElements(actorArray);
+                    System.out.println();
+                } else {
+                    r.sendResponseHeaders(404, -1);
+                    OutputStream os = r.getResponseBody();
+                    os.write(-1);
+                    os.close();
+                }
+                Session movieSession = driver.session();
+                Object[] movieArray = null;
+                String movieQuery = "MATCH (actor:Actor {actorId: {id}}), (bacon:Actor {actorId: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN EXTRACT (n in NODES(path)|n.movieId)";
+                StatementResult movieStatementResult = movieSession.run(movieQuery, params);
+                while(movieStatementResult.hasNext()){
+                    result = movieStatementResult.next();
+                    Map<String, Object> data = result.asMap();
+                    movieArray = ((Collection) data.get("EXTRACT (n in NODES(path)|n.movieId)")).toArray();
+                }
+
+                if (movieArray != null) {
+                    movieArray = removeNullElements(movieArray);
+                    System.out.println(movieArray[0]);
+                } else {
+                    r.sendResponseHeaders(404, -1);
+                    OutputStream os = r.getResponseBody();
+                    os.write(-1);
+                    os.close();
+                }
+
+
             }
             String response = jsonResult;
             r.sendResponseHeaders(200, response.length());
@@ -84,5 +108,22 @@ public class ComputeBaconPath implements HttpHandler {
             os.write(-1);
             os.close();
         }
+    }
+
+    public Object[] removeNullElements(Object[] array){
+        // store the length of the array
+        int len = array.length;
+        ArrayList<Object> temp = new ArrayList<Object>();
+        for (int i = 0; i < len; i++){
+            if (array[i] != null){
+                temp.add(array[i]);
+            }
+        }
+        Object[] ret = temp.toArray();
+       return ret;
+    }
+
+    public String generateBaconPathResponse(Object[] actorArray, Object[] movieArray){
+        return "";
     }
 }
