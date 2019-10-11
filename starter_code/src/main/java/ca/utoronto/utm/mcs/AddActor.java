@@ -8,7 +8,6 @@ import org.json.*;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.neo4j.driver.v1.*;
-import org.neo4j.driver.v1.summary.ResultSummary;
 
 public class AddActor implements HttpHandler
 {
@@ -17,52 +16,57 @@ public class AddActor implements HttpHandler
     public AddActor(Driver driverIn){
         driver = driverIn;
     }
+
     public void handle(HttpExchange r) throws IOException {
         try {
-            if (r.getRequestMethod().equals("POST")) {
+            System.out.println(r.getRequestMethod());
+            if (r.getRequestMethod().equals("PUT")) {
                 handlePost(r);
+            }else{
+                throw new Exception();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
         }
     }
 
-    public void handlePost(HttpExchange r) throws IOException, JSONException {
-       try {
-           String body = Utils.convert(r.getRequestBody());
-           JSONObject deserialized = new JSONObject(body);
-           String name = deserialized.getString("name");
-           String id = deserialized.getString("actorId");
-           addActor(name, id, driver);
-           String response = "";
-           r.sendResponseHeaders(200, response.length());
-           OutputStream os = r.getResponseBody();
-           os.write(response.getBytes());
-           os.close();
-       }
-       catch (IOException e){
-            String response = "";
-            r.sendResponseHeaders(500, response.length());
+    public void handlePost(HttpExchange r) throws IOException {
+        try {
+            String body = Utils.convert(r.getRequestBody());
+            JSONObject deserialized = new JSONObject(body);
+            String name = deserialized.getString("name");
+            String id = deserialized.getString("actorId");
+            System.out.println(name+" "+id);
+            addActor(name, id, driver);
+            r.sendResponseHeaders(200, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
-       }catch (JSONException e){
-            String response = "";
-            r.sendResponseHeaders(400, response.length());
+        } catch (JSONException e) {
+            r.sendResponseHeaders(400, -1);
             OutputStream os = r.getResponseBody();
-            os.write(response.getBytes());
+            os.write(-1);
             os.close();
-       }
+        } catch (Exception e) {
+            r.sendResponseHeaders(500, -1);
+            OutputStream os = r.getResponseBody();
+            os.write(-1);
+            os.close();
+        }
     }
 
-    private static void addActor(String name, String id, Driver driver)
-    {
-        Map<String,Object> params = new HashMap<String,Object>();
-        params.put( "x", name );
-        params.put( "id", id );
-        Session CREATEsession = driver.session();
-        String query ="MERGE (a:Actor { name:{x} , actorId: {id} })\n" +
-                "RETURN a";
-        StatementResult sr = CREATEsession.run( query, params);
+    private static void addActor(String name, String id, Driver driver) throws Exception {
+        try(Session creatSession = driver.session()){
+            Map<String,Object> params = new HashMap<String,Object>();
+            params.put( "name", name );
+            params.put( "actorId", id );
+            String query ="MERGE (a:Actor { actorId: {actorId} }) ON MATCH SET a.name = {name} ON CREATE SET a.name = {name} RETURN a";
+            StatementResult result = creatSession.run( query, params);
+        }catch(Exception e){
+            throw new Exception();
+        }
     }
 }
