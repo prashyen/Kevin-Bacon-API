@@ -89,8 +89,8 @@ public class ComputeBaconPath implements HttpHandler {
     public String generateBaconPathResponse(Object[] actorArray){
         int baconNumber = actorArray.length/2;
         String response = "{" +
-                "\"baconNumber\":" + Integer.toString(baconNumber) +
-                ",\"baconPath\":";
+                "\"baconNumber\":\"" + Integer.toString(baconNumber) +
+                "\",\"baconPath\":";
         String baconPath = "[";
         for (int i = 0; i < actorArray.length - 2; i += 2){
             baconPath += "{\"actorId\":\"" + actorArray[i] + "\",\"movieId\":\"" + actorArray[i+1] + "\"},";
