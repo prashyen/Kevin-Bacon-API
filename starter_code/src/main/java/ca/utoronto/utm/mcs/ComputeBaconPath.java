@@ -45,28 +45,33 @@ public class ComputeBaconPath implements HttpHandler {
             String jsonResult = "";
             if (id != null) {
                 String baconId = "nm0000102";
-                List<String> actors = new ArrayList<String>();
-                Session actorSession = driver.session();
-                Map<String, Object> params = new HashMap<String, Object>();
-                params.put("id", id);
-                params.put("baconId", baconId);
-                Record result;
-                Object[] actorArray = null;
-                String actorQuery = "MATCH  (actor:actor {id: {id}}), (bacon:actor {id: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN EXTRACT (n in NODES(path)|n.id)";
-                StatementResult actorStatementResult = actorSession.run(actorQuery, params);
-                while (actorStatementResult.hasNext()) {
-                    result = actorStatementResult.next();
-                    Map<String, Object> data = result.asMap();
-                    actorArray =  ((Collection) data.get("EXTRACT (n in NODES(path)|n.id)")).toArray();
-                }
+                if (!id.matches("nm0000102")) {
+                    List<String> actors = new ArrayList<String>();
+                    Session actorSession = driver.session();
+                    Map<String, Object> params = new HashMap<String, Object>();
+                    params.put("id", id);
+                    params.put("baconId", baconId);
+                    Record result;
+                    Object[] actorArray = null;
+                    String actorQuery = "MATCH  (actor:actor {id: {id}}), (bacon:actor {id: {baconId}}), path = shortestPath((actor)-[*]-(bacon)) RETURN EXTRACT (n in NODES(path)|n.id)";
+                    StatementResult actorStatementResult = actorSession.run(actorQuery, params);
+                    while (actorStatementResult.hasNext()) {
+                        result = actorStatementResult.next();
+                        Map<String, Object> data = result.asMap();
+                        actorArray = ((Collection) data.get("EXTRACT (n in NODES(path)|n.id)")).toArray();
+                    }
 
-                if (actorArray == null) {
-                    r.sendResponseHeaders(404, -1);
-                    OutputStream os = r.getResponseBody();
-                    os.write(-1);
-                    os.close();
+                    if (actorArray == null) {
+                        r.sendResponseHeaders(404, -1);
+                        OutputStream os = r.getResponseBody();
+                        os.write(-1);
+                        os.close();
+                    }
+                    jsonResult = generateBaconPathResponse(actorArray);
+                }else {
+                    jsonResult = "{" +
+                            "\"baconNumber\":\"0\",\"baconPath\":[]";
                 }
-                jsonResult = generateBaconPathResponse(actorArray);
             }
             String response = jsonResult;
             r.sendResponseHeaders(200, response.length());
